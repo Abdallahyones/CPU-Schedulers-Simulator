@@ -23,7 +23,7 @@ class Process {
     }
 }
 
- class SchedulerSimulation {
+public class SchedulerSimulation {
 
     // 1. Non-Preemptive Priority Scheduling
     public static void nonPreemptivePriority(List<Process> processes) {
