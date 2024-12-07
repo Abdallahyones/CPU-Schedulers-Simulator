@@ -1,8 +1,12 @@
-import java.util.*;
+//import java.util.*;
+import static java.lang.foreign.MemorySegment.NULL;
 
+import java.io.*;
+import java.util.*;
 class Process {
     String name;
     int arrivalTime;
+    int LeaveTime;
     int burstTime;
     int priority;
     int remainingTime;
@@ -19,191 +23,137 @@ class Process {
         this.quantum = quantum;
     }
     void calculateFCAIFactor(double V1, double V2) {
-        this.fcaiFactor = (10 - priority) + (arrivalTime / V1) + (remainingTime / V2);
+        //this.fcaiFactor = (10 - priority) + (arrivalTime / V1) + (remainingTime / V2);
+        this.fcaiFactor= (int)Math.ceil((10 - priority) + (arrivalTime / V1) + (remainingTime / V2));
     }
 }
 
  class SchedulerSimulation {
+     Queue<Process> processes = new PriorityQueue<Process>(Comparator.comparingInt(c -> c.arrivalTime));
+     double V1, V2;
 
-    // 1. Non-Preemptive Priority Scheduling
-    public static void nonPreemptivePriority(List<Process> processes) {
-        processes.sort((p1, p2) -> p1.priority != p2.priority
-                ? Integer.compare(p1.priority, p2.priority)
-                : Integer.compare(p1.arrivalTime, p2.arrivalTime));
+     public SchedulerSimulation(Queue<Process> processes) {
+         this.processes = processes;
+         int mxArr = 0, mxBurst = 0;
+         for (Process p : processes) {
+             mxBurst = Math.max(p.remainingTime, mxBurst);
+             mxArr = Math.max(p.arrivalTime, mxArr);
+         }
+         this.V1 = mxArr / 10.0;
+         this.V2 = mxBurst / 10.0;
+         for (Process p : processes) {
+             p.calculateFCAIFactor(V1, V2);
+         }
+     }
 
-        int currentTime = 0;
-        for (Process p : processes) {
-            currentTime = Math.max(currentTime, p.arrivalTime);
-            p.waitingTime = currentTime - p.arrivalTime;
-            currentTime += p.burstTime;
-            p.turnaroundTime = currentTime - p.arrivalTime;
-            System.out.println(p.name + " executed. WT: " + p.waitingTime + ", TAT: " + p.turnaroundTime);
-        }
-    }
-
-    // 2. Non-Preemptive Shortest Job First (SJF) Scheduling
-    public static void nonPreemptiveSJF(List<Process> processes) {
-        processes.sort(Comparator.comparingInt(p -> p.arrivalTime));
-        int currentTime = 0;
-        List<Process> readyQueue = new ArrayList<>();
-
-        while (!processes.isEmpty() || !readyQueue.isEmpty()) {
-            while (!processes.isEmpty() && processes.get(0).arrivalTime <= currentTime) {
-                readyQueue.add(processes.remove(0));
-            }
-            if (readyQueue.isEmpty()) {
-                currentTime++;
-                continue;
-            }
-            readyQueue.sort(Comparator.comparingInt(p -> p.burstTime));
-            Process nextProcess = readyQueue.remove(0);
-            nextProcess.waitingTime = currentTime - nextProcess.arrivalTime;
-            currentTime += nextProcess.burstTime;
-            nextProcess.turnaroundTime = currentTime - nextProcess.arrivalTime;
-            System.out.println(nextProcess.name + " executed. WT: " + nextProcess.waitingTime + ", TAT: " + nextProcess.turnaroundTime);
-        }
-    }
-
-    // 3. Preemptive Shortest Remaining Time First (SRTF) Scheduling
-    public static void preemptiveSRTF(List<Process> processes) {
-        int currentTime = 0;
-        while (!processes.isEmpty()) {
-            final int currentTimeCopy = currentTime;  // Make a final copy of currentTime
-
-            Process nextProcess = processes.stream()
-                    .filter(p -> p.arrivalTime <= currentTimeCopy)
-                    .min(Comparator.comparingInt(p -> p.remainingTime))
-                    .orElse(null);
-
-            if (nextProcess == null) {
-                currentTime++;
-                continue;
-            }
-
-            nextProcess.remainingTime--;
-            currentTime++;
-
-            if (nextProcess.remainingTime == 0) {
-                nextProcess.waitingTime = currentTime - nextProcess.arrivalTime - nextProcess.burstTime;
-                nextProcess.turnaroundTime = currentTime - nextProcess.arrivalTime;
-                System.out.println(nextProcess.name + " completed. WT: " + nextProcess.waitingTime + ", TAT: " + nextProcess.turnaroundTime);
-                processes.remove(nextProcess);
-            }
-        }
-    }
-
-     public static void fcaiScheduling(List<Process> processes) {
-
+     public void run() {
          Queue<Process> ReadyQueue = new LinkedList<>();
          int currentTime = 0;
          Process process = null;
 
-         System.out.println("\nExecution Timeline:");
-
          while (!processes.isEmpty() || !ReadyQueue.isEmpty()) {
-             // Add processes to the Ready Queue if they've arrived
-             Iterator<Process> it = processes.iterator();
-             while (it.hasNext()) {
-                 Process p = it.next();
-                 if (p.arrivalTime <= currentTime) {
-                     ReadyQueue.add(p);
-                     it.remove();
-                 }
-             }
-
+             // Get Process at certain time
+             ReadyQueue.addAll(GetProcesses(processes, currentTime));
              if (ReadyQueue.isEmpty()) {
                  currentTime++;
                  continue;
              }
 
-             // Fetch the next process
              if (process == null) {
                  process = ReadyQueue.poll();
              }
-
              int curr = 0;
-             int Quantum40Percent = (int) Math.ceil(process.quantum * 0.4); // First 40% is non-preemptive
+             int Quantum40Percent = (int) Math.ceil(process.quantum * 0.4);
              boolean preempted = false;
              boolean done = false;
-             String msg = "";
+             String Msg = "";
 
-             // Execute process while meeting quantum and remaining burst conditions
              while (curr < process.quantum && !preempted && !done) {
-                 curr++;
-                 currentTime++;
-                 process.remainingTime--;
-
-                 // If the process completes during execution
+                 System.out.println("Curr : " + (curr + currentTime) + " Name " + process.name +
+                         " Remaining Burst Time : " + process.remainingTime);
                  if (process.remainingTime == 0) {
                      done = true;
-                     msg = "Completed";
+                     process.LeaveTime = currentTime + curr;
+                     System.out.println("Process " + process.name + " is Done.");
+                     process = null;
                      break;
                  }
 
-                 // Check if preemption conditions are met at 40% of the quantum
-                 if (curr >= Quantum40Percent) {
-                     preempted = checkPreemption(ReadyQueue, process);
+                 if (curr < Quantum40Percent) {
+                     curr++;
+                     process.remainingTime--;
+                     continue;
                  }
+
+                 // System.out.println("Current : " + currentTime + curr);
+                 ReadyQueue.addAll(GetProcesses(processes, currentTime + curr));
+                 Process pre = null;
+                 double mn = Integer.MAX_VALUE;
+                 for (Process p : ReadyQueue) {
+                     if (process.fcaiFactor > p.fcaiFactor) {
+                         if (mn > p.fcaiFactor) {
+                             mn = p.fcaiFactor;
+                             pre = p;
+                         }
+                     }
+                 }
+
+                 if (pre == null) {
+                     curr++;
+                     process.remainingTime--;
+                     continue;
+                 }
+
+                 preempted = true;
+                 ReadyQueue.remove(pre);
+                 updateProcess(process, true, curr, processes);
+                 System.out.println("Preempted " + pre.name + " this " + process.name + " New FCAI");
+                 ReadyQueue.add(process);
+                 process = pre;
+                 break;
              }
 
-             if (!done) {
-                 msg = preempted ? "Preempted" : "Finished Quantum";
-             }
-
-             // Print process execution details
-             System.out.println("Time " + (currentTime - curr) + "-" + currentTime + ": " + process.name +
-                     " executed for " + curr + " units (" + msg + ")");
-
-             // Update process details after execution
-             updateProcess(process, preempted,processes);
-
-             // Handle process states after execution
-             if (done) {
-                 // If process completed, calculate and print stats
-                 process.turnaroundTime = currentTime - process.arrivalTime;
-                 process.waitingTime = process.turnaroundTime - process.burstTime;
-
-                 System.out.println(process.name + " completed. TAT: " + process.turnaroundTime +
-                         ", WT: " + process.waitingTime);
-
+             currentTime += curr;
+             if (!preempted && !done) {
+                 ReadyQueue.add(process);
+                 System.out.println();
+                 updateProcess(process, preempted, curr, processes);
+                 System.out.println("Quantum finished of process " + process.name);
                  process = null;
-             } else {
-                 // If preempted, requeue the process
-                 if (preempted) {
-                     ReadyQueue.add(process);
-                     process = null;
-                 }
              }
          }
+
+         System.out.println(currentTime);
+     }
+
+     public static List<Process> GetProcesses(Queue<Process> processes, int currentTime) {
+         List<Process> arrivedProcesses = new ArrayList<>();
+         Iterator<Process> iterator = processes.iterator();
+
+         // Iterate through the processes to find those that have arrived
+         while (iterator.hasNext()) {
+             Process process = iterator.next();
+             if (process.arrivalTime <= currentTime) {
+                 arrivedProcesses.add(process);
+                 iterator.remove(); // Remove the process from the original list to prevent duplication
+             }
+         }
+         return arrivedProcesses;
      }
 
      // Method to update process parameters
-     public static void updateProcess(Process process, boolean preempted, List<Process> processes) {
-         double V1 = Collections.max(processes, Comparator.comparingInt(p -> p.arrivalTime)).arrivalTime / 10.0;
-         double V2 = Collections.max(processes, Comparator.comparingInt(p -> p.burstTime)).burstTime / 10.0;
+     public void updateProcess(Process process, boolean preempted, int currentTime, Queue<Process> processes) {
 
          if (!preempted) {
              process.quantum += 2; // Increase quantum time if not preempted
          } else {
-             process.quantum += (process.quantum - (process.burstTime - process.remainingTime));
+             process.quantum += (process.quantum - currentTime);
          }
 
          System.out.println("Quantum = " + process.quantum);
          process.calculateFCAIFactor(V1, V2); // Update FCAI factor
          System.out.println("FCAI = " + process.fcaiFactor);
      }
-
-     // Method to check for preemption
-     public static boolean checkPreemption(Queue<Process> ReadyQueue, Process currentProcess) {
-         for (Process queuedProcess : ReadyQueue) {
-             if (queuedProcess.fcaiFactor < currentProcess.fcaiFactor) {
-                 return true; // Preempt if a process with lower FCAI is found
-             }
-         }
-         return false;
-     }
-
-
 
 
      public static void main(String[] args) {
@@ -212,23 +162,22 @@ class Process {
          // Get the number of processes
          System.out.print("Enter the number of processes: ");
          int numProcesses = Integer.parseInt(scanner.nextLine().trim()); // Read full line and parse
-
-         // Get the Round Robin Time Quantum
-         System.out.print("Enter the Round Robin Time Quantum: ");
-         int roundRobinQuantum = Integer.parseInt(scanner.nextLine().trim());
-
          // Get the Context Switching Time
          System.out.print("Enter the Context Switching Time: ");
          int contextSwitchingTime = Integer.parseInt(scanner.nextLine().trim());
 
          // Create a list of processes
-         List<Process> processes = new ArrayList<>();
+         Queue<Process> processes = new PriorityQueue<Process>(Comparator.comparingInt(c -> c.arrivalTime));
 
          for (int i = 0; i < numProcesses; i++) {
              System.out.println("\nEnter details for Process " + (i + 1) + ":");
 
              System.out.print("Process Name: ");
              String name = scanner.nextLine().trim();
+
+             // Get the Round Robin Time Quantum
+             System.out.print("Enter the Round Robin Time Quantum: ");
+             int roundRobinQuantum = Integer.parseInt(scanner.nextLine().trim());
 
              System.out.print("Process Color (Graphical Representation): ");
              String color = scanner.nextLine().trim();
@@ -247,33 +196,38 @@ class Process {
 
          // Execute FCAI Scheduling
          System.out.println("\nExecuting FCAI Scheduling...");
-         SchedulerSimulation.fcaiScheduling(processes);
+         SchedulerSimulation inst =new SchedulerSimulation(processes);
+           inst.run();
 
          scanner.close();
      }
 
  }
 
+
 /*
-4
 4
 1
 P1
+4
 red
 0
 17
 4
 P2
+3
 blue
 3
 6
 9
 P3
+5
 green
 4
 10
 3
 P4
+2
 yellow
 29
 4
@@ -281,5 +235,6 @@ yellow
 
 
  */
+
 
 
