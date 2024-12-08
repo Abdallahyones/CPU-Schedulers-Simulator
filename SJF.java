@@ -18,10 +18,16 @@ public class SJF {
         int done=0,curtime=0,mn=2000,shortestID=-1;
         while (done!=n){
 
+
+
             //get shortest process
             for (int i = 0; i < n; i++) {
-                if(processarray[i].arrival<=curtime && processarray[i].burst<mn && processarray[i].burst!=-1){
-                    mn=processarray[i].burst;
+
+                int starvationfact=(curtime-processarray[i].arrival)/50;
+                if(starvationfact<0) starvationfact=0;
+
+                if(processarray[i].arrival<=curtime && processarray[i].burst-starvationfact<mn && processarray[i].burst!=-1){
+                    mn=processarray[i].burst-starvationfact;
                     shortestID=i;
                 }
             }
@@ -93,3 +99,18 @@ public class SJF {
         System.out.printf("Average Turnaround Time: %.2f\n", totalTAT / proarray.length);
     }
 }
+
+
+//4
+//        1
+//        0
+//        7
+//        2
+//        2
+//        4
+//        3
+//        4
+//        1
+//        4
+//        5
+//        4

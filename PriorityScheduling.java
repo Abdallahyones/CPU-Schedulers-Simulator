@@ -14,7 +14,7 @@ class process
 }
 
 public class PriorityScheduling {
-    static void calcwaitingtime(process processarray [],int order [],int n){
+    static void calcwaitingtime(process processarray [],int order [],int n,int switchingTime){
         int done=0,curtime=0,mnbt=20000,mnpt=200000,shortestID=-1;
         int[] bt = new int[n];
         for (int i = 0; i < n; i++) {
@@ -38,15 +38,16 @@ public class PriorityScheduling {
 
             }
 
+
             //no arrival yet
             if(shortestID==-1){
                 curtime++;
             }
             else{
-                processarray[shortestID].waiting=curtime-processarray[shortestID].arrival;
-                curtime+=processarray[shortestID].burst;
-                bt[shortestID]=0;
+                curtime+=processarray[shortestID].burst+switchingTime;
                 processarray[shortestID].TAT=curtime-processarray[shortestID].arrival;
+                processarray[shortestID].waiting=processarray[shortestID].TAT-processarray[shortestID].burst;
+                bt[shortestID]=0;
                 order[done]=processarray[shortestID].id;
                 done++;
             }
@@ -60,6 +61,9 @@ public class PriorityScheduling {
         // Take input for the number of processes
         System.out.print("Enter the number of processes: ");
         int n = scanner.nextInt();
+
+        System.out.print("Enter the context switching time: ");
+        int switchingTime  = scanner.nextInt();
 
         // Create an array of processes
         process[] proarray = new process[n];
@@ -79,7 +83,7 @@ public class PriorityScheduling {
 
         // Array to store the execution order
         int[] doneOrder = new int[n];
-        calcwaitingtime(proarray, doneOrder, n);
+        calcwaitingtime(proarray, doneOrder, n,switchingTime);
 
 
         // Print processes execution order

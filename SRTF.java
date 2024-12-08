@@ -15,9 +15,10 @@ import java.util.Scanner;
 
 public class SRTF {
 
-    static void calcwaitingtime(process processarray [],int order [],int n){
+    static void calcwaitingtime(process processarray [],int order [],int n,int switchingTime){
         int done=0,curtime=0,mn=20000,shortestID=0;
         int[] bt = new int[n];
+        int prevProcessID=-1;
         for (int i = 0; i < n; i++) {
             bt[i]=processarray[i].burst;
         }
@@ -27,16 +28,25 @@ public class SRTF {
             //get shortest process
             for (int i = 0; i < n; i++) {
 
-                if(processarray[i].arrival<=curtime && bt[i]<mn && bt[i]>0){
-                    mn=bt[i];
+                int starvationfact=(curtime-processarray[i].arrival)/50;
+                if(starvationfact<0) starvationfact=0;
+
+                if(processarray[i].arrival<=curtime && bt[i]-starvationfact<mn && bt[i]>0){
+                    mn=bt[i]-starvationfact;
                     shortestID=i;
                 }
             }
 
+            if (prevProcessID != -1 && prevProcessID != shortestID) {
+                curtime += switchingTime;
+            }
+
             bt[shortestID]--;
+            prevProcessID=shortestID;
+
             if(bt[shortestID]==0){
-                processarray[shortestID].waiting=(curtime+1)-processarray[shortestID].arrival-processarray[shortestID].burst;
-                processarray[shortestID].TAT=(curtime+1)-processarray[shortestID].arrival;
+                processarray[shortestID].waiting=(curtime+1+switchingTime)-processarray[shortestID].arrival-processarray[shortestID].burst;
+                processarray[shortestID].TAT=(curtime+1+switchingTime)-processarray[shortestID].arrival;
                 order[done]=processarray[shortestID].id;
                 done++;
             }
@@ -51,6 +61,9 @@ public class SRTF {
         // Take input for the number of processes
         System.out.print("Enter the number of processes: ");
         int n = scanner.nextInt();
+
+        System.out.print("Enter the context switching time: ");
+        int switchingTime  = scanner.nextInt();
 
         // Create an array of processes
         process[] proarray = new process[n];
@@ -68,7 +81,7 @@ public class SRTF {
 
         // Array to store the execution order
         int[] doneOrder = new int[n];
-        calcwaitingtime(proarray, doneOrder, n);
+        calcwaitingtime(proarray, doneOrder, n,switchingTime);
 
 
         // Print processes execution order
@@ -94,3 +107,18 @@ public class SRTF {
         System.out.printf("Average Turnaround Time: %.2f\n", totalTAT / proarray.length);
     }
 }
+
+//4
+//        1
+//        1
+//        0
+//        7
+//        2
+//        2
+//        4
+//        3
+//        4
+//        1
+//        4
+//        5
+//        4
