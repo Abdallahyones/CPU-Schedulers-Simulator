@@ -1,20 +1,10 @@
 import java.util.Scanner;
+import javax.swing.*;
+import java.awt.*;
 
-class process
-{
-    int id,burst,arrival,waiting,TAT,priority;
-    public  process(int id,int burst,int arrival,int priority){
-        this.id=id;
-        this.burst=burst;
-        this.arrival=arrival;
-        this.priority=priority;
-        this.waiting=0;
-        this.TAT=0;
-    }
-}
 
 public class PriorityScheduling {
-    static void calcwaitingtime(process processarray [],int order [],int n,int switchingTime){
+    static void calcwaitingtime(Process processarray [],int order [],int n,int switchingTime){
         int done=0,curtime=0,mnbt=20000,mnpt=200000,shortestID=-1;
         int[] bt = new int[n];
         for (int i = 0; i < n; i++) {
@@ -28,7 +18,7 @@ public class PriorityScheduling {
             //get shortest process
             for (int i = 0; i < n; i++) {
 
-                if(processarray[i].arrival<=curtime && processarray[i].priority <= mnpt && bt[i] > 0){
+                if(processarray[i].arrivalTime<=curtime && processarray[i].priority <= mnpt && bt[i] > 0){
                     if( (processarray[i].priority==mnpt && bt[i]<mnbt) || processarray[i].priority< mnpt){
                         mnbt=bt[i];
                         mnpt=processarray[i].priority;
@@ -45,13 +35,47 @@ public class PriorityScheduling {
             }
             else{
                 curtime+=processarray[shortestID].burst+switchingTime;
-                processarray[shortestID].TAT=curtime-processarray[shortestID].arrival;
-                processarray[shortestID].waiting=processarray[shortestID].TAT-processarray[shortestID].burst;
+                processarray[shortestID].TAT=curtime-processarray[shortestID].arrivalTime;
+                processarray[shortestID].waitingTime=processarray[shortestID].TAT-processarray[shortestID].burst;
                 bt[shortestID]=0;
                 order[done]=processarray[shortestID].id;
                 done++;
             }
         }
+    }
+
+    // Draw graphical representation
+    public static void createGraph(int[] executionOrder, Process[] processes) {
+        JFrame frame = new JFrame("Processes Execution Order");
+        frame.setSize(800, 200);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        JPanel panel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                int x = 50; // Initial x position
+                int y = 50; // Fixed y position
+                int width = 50; // Fixed width for each process block
+                int height = 50;
+
+                for (int id : executionOrder) {
+                    // Random color for each process
+                    Color color = new Color((int) (Math.random() * 0x1000000));
+                    g.setColor(color);
+                    g.fillRect(x, y, width, height);
+
+                    g.setColor(Color.BLACK);
+                    g.drawRect(x, y, width, height);
+                    g.drawString("P" + id, x + 15, y + 30);
+
+                    x += width + 10; // Move to the next position
+                }
+            }
+        };
+
+        frame.add(panel);
+        frame.setVisible(true);
     }
 
     public static void main(String[] args)
@@ -66,7 +90,7 @@ public class PriorityScheduling {
         int switchingTime  = scanner.nextInt();
 
         // Create an array of processes
-        process[] proarray = new process[n];
+        Process[] proarray = new Process[n];
 
         // Take input for each process
         for (int i = 0; i < n; i++) {
@@ -78,7 +102,8 @@ public class PriorityScheduling {
             int burst = scanner.nextInt();
             System.out.print("Enter Priority for Process " + id + ": ");
             int priority = scanner.nextInt();
-            proarray[i] = new process(id, burst, arrival,priority);
+            String name = "P" + (char)(id+'0');
+            proarray[i] = new Process( name , id, burst, arrival,priority , 0 , "red");
         }
 
         // Array to store the execution order
@@ -98,14 +123,43 @@ public class PriorityScheduling {
         System.out.println("\nProcess Details:");
         System.out.println("ID\tWaiting Time\tTurnaround Time");
         float totalWaitingTime = 0, totalTAT = 0;
-        for (process p : proarray) {
-            System.out.printf("P%d\t%d\t\t%d\n", p.id, p.waiting, p.TAT);
-            totalWaitingTime += p.waiting;
+        for (Process p : proarray) {
+            System.out.printf("P%d\t%d\t\t%d\n", p.id, p.waitingTime, p.TAT);
+            totalWaitingTime += p.waitingTime;
             totalTAT += p.TAT;
         }
 
         // Print average waiting time and turnaround time
         System.out.printf("\nAverage Waiting Time: %.2f\n", totalWaitingTime / proarray.length);
         System.out.printf("Average Turnaround Time: %.2f\n", totalTAT / proarray.length);
+
+        // Show graphical representation
+        createGraph(doneOrder, proarray);
     }
 }
+
+
+/*
+
+ 4
+ 1
+ 1
+ 0
+ 6
+ 1
+ 2
+ 1
+ 3
+ 3
+ 3
+ 2
+ 4
+ 1
+ 4
+ 3
+ 3
+ 2
+
+
+
+ */
