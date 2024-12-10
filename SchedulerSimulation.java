@@ -240,6 +240,7 @@ class SchedulerSimulation {
                         g.setColor(Color.BLACK);
                         g.drawRect(x, y, width, height);
                         g.drawString(processName, x + 5, y + 30);
+
                     }
                     x += width; // Move to the next block
                 }

@@ -49,13 +49,14 @@ public class SRTF {
         }
 
         // Draw graphical representation
-        drawGraph(executionTimeline);
+        drawGraph(executionTimeline , processarray);
     }
 
     // Draw graphical representation
-    public static void drawGraph(List<Integer> timeline) {
-        JFrame frame = new JFrame("SRTF Scheduling Timeline");
-        frame.setSize(1000, 200);
+    // Draw graphical representation
+    public static void drawGraph(List<Integer> timeline, Process[] processes) {
+        JFrame frame = new JFrame("SJF Scheduling Timeline");
+        frame.setSize(1200, 300);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         JPanel panel = new JPanel() {
@@ -63,24 +64,25 @@ public class SRTF {
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 int x = 50; // Initial x position
-                int y = 50; // Fixed y position
-                int width = 30; // Fixed width for each time unit
+                int y = 100; // Fixed y position
+                int width = 40; // Fixed width for each process
                 int height = 50;
 
                 for (int id : timeline) {
-                    if (id == -1) { // Context switch block
+                    if (id == -1) { // Idle time block
                         g.setColor(Color.LIGHT_GRAY);
                         g.fillRect(x, y, width, height);
                         g.setColor(Color.BLACK);
                         g.drawRect(x, y, width, height);
-                        g.drawString("CS", x + 5, y + 30);
+                        g.drawString("IDLE", x + 5, y + 30);
                     } else { // Process block
-                        Color color = new Color((int) (Math.random() * 0x1000000));
+                        Process process = processes[id-1];
+                        Color color = getColorFromString(process.color); // Get the color from string input
                         g.setColor(color);
                         g.fillRect(x, y, width, height);
                         g.setColor(Color.BLACK);
                         g.drawRect(x, y, width, height);
-                        g.drawString("P" + id, x + 5, y + 30);
+                        g.drawString("P" + process.id, x + 5, y + 30);
                     }
                     x += width;
                 }
@@ -96,10 +98,10 @@ public class SRTF {
 
         // Take input for the number of processes
         System.out.print("Enter the number of processes: ");
-        int n = scanner.nextInt();
+        int n = Integer.parseInt(scanner.nextLine().trim());
 
         System.out.print("Enter the context switching time: ");
-        int switchingTime = scanner.nextInt();
+        int switchingTime = Integer.parseInt(scanner.nextLine().trim());
 
         // Create an array of processes
         Process[] proarray = new Process[n];
@@ -107,13 +109,15 @@ public class SRTF {
         // Take input for each process
         for (int i = 0; i < n; i++) {
             System.out.print("Enter Process ID: ");
-            int id = scanner.nextInt();
+            int id = Integer.parseInt(scanner.nextLine().trim());
             System.out.print("Enter Arrival Time for Process " + id + ": ");
-            int arrival = scanner.nextInt();
+            int arrival = Integer.parseInt(scanner.nextLine().trim());
             System.out.print("Enter Burst Time for Process " + id + ": ");
-            int burst = scanner.nextInt();
+            int burst = Integer.parseInt(scanner.nextLine().trim());
             String name = "P" + (char)(id+'0');
-            proarray[i] = new Process( name , id, burst, arrival,0 , 0 , "red");
+            System.out.print("Process Color (Graphical Representation): ");
+            String color = scanner.nextLine().trim();
+            proarray[i] = new Process( name , id, burst, arrival,0 , 0 , color);
 //            proarray[i] = new Process(id, burst, arrival, 0);
         }
 
@@ -142,6 +146,39 @@ public class SRTF {
         System.out.printf("\nAverage Waiting Time: %.2f\n", totalWaitingTime / proarray.length);
         System.out.printf("Average Turnaround Time: %.2f\n", totalTAT / proarray.length);
     }
+
+    private static Color getColorFromString(String colorString) {
+        try {
+            // If it's a hex string (e.g., "#FF0000"), it will work directly
+            return Color.decode(colorString);
+        } catch (NumberFormatException e) {
+            // Handle named colors manually
+            switch (colorString.toLowerCase()) {
+                case "red":
+                    return Color.RED;
+                case "green":
+                    return Color.GREEN;
+                case "blue":
+                    return Color.BLUE;
+                case "yellow":
+                    return Color.YELLOW;
+                case "black":
+                    return Color.BLACK;
+                case "white":
+                    return Color.WHITE;
+                case "gray":
+                    return Color.GRAY;
+                case "lightgray":
+                    return Color.LIGHT_GRAY;
+                case "darkgray":
+                    return Color.DARK_GRAY;
+                // Add more cases as necessary
+                default:
+                    return Color.BLACK; // Default to black if the color is unknown
+            }
+        }
+    }
+
 }
 
 
@@ -151,15 +188,19 @@ public class SRTF {
         1
         0
         7
+        red
         2
         2
         4
+        blue
         3
         4
         1
+        yellow
         4
         5
         4
+        green
 
  */
 

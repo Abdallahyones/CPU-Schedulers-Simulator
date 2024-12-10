@@ -1,3 +1,4 @@
+import java.util.List;
 import java.util.Scanner;
 import javax.swing.*;
 import java.awt.*;
@@ -47,7 +48,7 @@ public class PriorityScheduling {
     // Draw graphical representation
     public static void createGraph(int[] executionOrder, Process[] processes) {
         JFrame frame = new JFrame("Processes Execution Order");
-        frame.setSize(800, 200);
+        frame.setSize(1200, 300);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         JPanel panel = new JPanel() {
@@ -60,16 +61,22 @@ public class PriorityScheduling {
                 int height = 50;
 
                 for (int id : executionOrder) {
-                    // Random color for each process
-                    Color color = new Color((int) (Math.random() * 0x1000000));
-                    g.setColor(color);
-                    g.fillRect(x, y, width, height);
-
-                    g.setColor(Color.BLACK);
-                    g.drawRect(x, y, width, height);
-                    g.drawString("P" + id, x + 15, y + 30);
-
-                    x += width + 10; // Move to the next position
+                    if (id == -1) { // Idle time block
+                        g.setColor(Color.LIGHT_GRAY);
+                        g.fillRect(x, y, width, height);
+                        g.setColor(Color.BLACK);
+                        g.drawRect(x, y, width, height);
+                        g.drawString("IDLE", x + 5, y + 30);
+                    } else { // Process block
+                        Process process = processes[id-1];
+                        Color color = getColorFromString(process.color); // Get the color from string input
+                        g.setColor(color);
+                        g.fillRect(x, y, width, height);
+                        g.setColor(Color.BLACK);
+                        g.drawRect(x, y, width, height);
+                        g.drawString("P" + process.id, x + 5, y + 30);
+                    }
+                    x += width; // Move to the next position
                 }
             }
         };
@@ -78,16 +85,17 @@ public class PriorityScheduling {
         frame.setVisible(true);
     }
 
+
     public static void main(String[] args)
     {
         Scanner scanner = new Scanner(System.in);
 
         // Take input for the number of processes
         System.out.print("Enter the number of processes: ");
-        int n = scanner.nextInt();
+        int n = Integer.parseInt(scanner.nextLine().trim());
 
         System.out.print("Enter the context switching time: ");
-        int switchingTime  = scanner.nextInt();
+        int switchingTime  = Integer.parseInt(scanner.nextLine().trim());
 
         // Create an array of processes
         Process[] proarray = new Process[n];
@@ -95,15 +103,17 @@ public class PriorityScheduling {
         // Take input for each process
         for (int i = 0; i < n; i++) {
             System.out.print("Enter Process ID: ");
-            int id = scanner.nextInt();
+            int id = Integer.parseInt(scanner.nextLine().trim());
             System.out.print("Enter Arrival Time for Process " + id + ": ");
-            int arrival = scanner.nextInt();
+            int arrival = Integer.parseInt(scanner.nextLine().trim());
             System.out.print("Enter Burst Time for Process " + id + ": ");
-            int burst = scanner.nextInt();
+            int burst = Integer.parseInt(scanner.nextLine().trim());
             System.out.print("Enter Priority for Process " + id + ": ");
-            int priority = scanner.nextInt();
+            int priority = Integer.parseInt(scanner.nextLine().trim());
             String name = "P" + (char)(id+'0');
-            proarray[i] = new Process( name , id, burst, arrival,priority , 0 , "red");
+            System.out.print("Process Color (Graphical Representation): ");
+            String color = scanner.nextLine().trim();
+            proarray[i] = new Process( name , id, burst, arrival,priority , 0 , color);
         }
 
         // Array to store the execution order
@@ -136,6 +146,38 @@ public class PriorityScheduling {
         // Show graphical representation
         createGraph(doneOrder, proarray);
     }
+
+    private static Color getColorFromString(String colorString) {
+        try {
+            // If it's a hex string (e.g., "#FF0000"), it will work directly
+            return Color.decode(colorString);
+        } catch (NumberFormatException e) {
+            // Handle named colors manually
+            switch (colorString.toLowerCase()) {
+                case "red":
+                    return Color.RED;
+                case "green":
+                    return Color.GREEN;
+                case "blue":
+                    return Color.BLUE;
+                case "yellow":
+                    return Color.YELLOW;
+                case "black":
+                    return Color.BLACK;
+                case "white":
+                    return Color.WHITE;
+                case "gray":
+                    return Color.GRAY;
+                case "lightgray":
+                    return Color.LIGHT_GRAY;
+                case "darkgray":
+                    return Color.DARK_GRAY;
+                // Add more cases as necessary
+                default:
+                    return Color.BLACK; // Default to black if the color is unknown
+            }
+        }
+    }
 }
 
 
@@ -147,18 +189,22 @@ public class PriorityScheduling {
  0
  6
  1
+ red
  2
  1
  3
  3
+ blue
  3
  2
  4
  1
+ green
  4
  3
  3
  2
+ yellow
 
 
 
