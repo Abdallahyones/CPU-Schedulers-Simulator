@@ -136,8 +136,8 @@ public class SJF {
         System.out.printf("Average Turnaround Time: %.2f\n", totalTAT / proarray.length);
 
 //         Draw graphical representation
-        drawGraph(timeline , proarray);
-//        GUI gui = new GUI(timeline , proarray , n);
+//        drawGraph(timeline , proarray);
+        GUI gui = new GUI(timeline , proarray , "SJF" , totalWaitingTime / proarray.length ,totalTAT / proarray.length );
 
     }
     private static Color getColorFromString(String colorString) {

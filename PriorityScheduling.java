@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import javax.swing.*;
@@ -5,45 +6,44 @@ import java.awt.*;
 
 
 public class PriorityScheduling {
-    static void calcwaitingtime(Process processarray [],int order [],int n,int switchingTime){
-        int done=0,curtime=0,mnbt=20000,mnpt=200000,shortestID=-1;
+
+    static void calcwaitingtime(Process[] processArray, List<Integer> order, int n, int switchingTime) {
+        int done = 0, curTime = 0, mnbt = 20000, mnpt = 200000, shortestID = -1;
         int[] bt = new int[n];
         for (int i = 0; i < n; i++) {
-            bt[i]=processarray[i].burst;
+            bt[i] = processArray[i].burst;
         }
 
-        while (done!=n){
-            mnbt=200000;
-            mnpt=200000;
-            shortestID=-1;
-            //get shortest process
-            for (int i = 0; i < n; i++) {
+        while (done != n) {
+            mnbt = 200000;
+            mnpt = 200000;
+            shortestID = -1;
 
-                if(processarray[i].arrivalTime<=curtime && processarray[i].priority <= mnpt && bt[i] > 0){
-                    if( (processarray[i].priority==mnpt && bt[i]<mnbt) || processarray[i].priority< mnpt){
-                        mnbt=bt[i];
-                        mnpt=processarray[i].priority;
-                        shortestID=i;
+            // Get the shortest process
+            for (int i = 0; i < n; i++) {
+                if (processArray[i].arrivalTime <= curTime && processArray[i].priority <= mnpt && bt[i] > 0) {
+                    if ((processArray[i].priority == mnpt && bt[i] < mnbt) || processArray[i].priority < mnpt) {
+                        mnbt = bt[i];
+                        mnpt = processArray[i].priority;
+                        shortestID = i;
                     }
                 }
-
             }
 
-
-            //no arrival yet
-            if(shortestID==-1){
-                curtime++;
-            }
-            else{
-                curtime+=processarray[shortestID].burst+switchingTime;
-                processarray[shortestID].TAT=curtime-processarray[shortestID].arrivalTime;
-                processarray[shortestID].waitingTime=processarray[shortestID].TAT-processarray[shortestID].burst;
-                bt[shortestID]=0;
-                order[done]=processarray[shortestID].id;
+            // No arrival yet
+            if (shortestID == -1) {
+                curTime++;
+            } else {
+                curTime += processArray[shortestID].burst + switchingTime;
+                processArray[shortestID].TAT = curTime - processArray[shortestID].arrivalTime;
+                processArray[shortestID].waitingTime = processArray[shortestID].TAT - processArray[shortestID].burst;
+                bt[shortestID] = 0;
+                order.add(processArray[shortestID].id); // Add to list instead of array
                 done++;
             }
         }
     }
+
 
     // Draw graphical representation
     public static void createGraph(int[] executionOrder, Process[] processes) {
@@ -117,14 +117,15 @@ public class PriorityScheduling {
         }
 
         // Array to store the execution order
-        int[] doneOrder = new int[n];
+//        int[] doneOrder = new int[n];
+        List<Integer> doneOrder = new ArrayList<>();
         calcwaitingtime(proarray, doneOrder, n,switchingTime);
 
 
         // Print processes execution order
         System.out.println("Processes Execution Order:");
         for (int i = 0; i < proarray.length; i++) {
-            System.out.print("P" + doneOrder[i] + " ");
+            System.out.print("P" + doneOrder.get(i) + " ");
         }
         System.out.println();
 
@@ -144,7 +145,8 @@ public class PriorityScheduling {
         System.out.printf("Average Turnaround Time: %.2f\n", totalTAT / proarray.length);
 
         // Show graphical representation
-        createGraph(doneOrder, proarray);
+//        createGraph(doneOrder, proarray);
+        GUI gui = new GUI(doneOrder , proarray , "PriorityScheduling" , totalWaitingTime / proarray.length ,totalTAT / proarray.length );
     }
 
     private static Color getColorFromString(String colorString) {

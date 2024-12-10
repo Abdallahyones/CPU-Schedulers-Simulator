@@ -5,12 +5,12 @@ import java.util.List;
 import java.util.Scanner;
 
 public class SRTF {
-
+    static public List<Integer> executionTimeline = new ArrayList<>(); // Track the execution timeline
     static void calcwaitingtime(Process processarray[], int order[], int n, int switchingTime) {
         int done = 0, curtime = 0, mn = 20000, shortestID = 0;
         int[] bt = new int[n];
         int prevProcessID = -1;
-        List<Integer> executionTimeline = new ArrayList<>(); // Track the execution timeline
+
 
         for (int i = 0; i < n; i++) {
             bt[i] = processarray[i].burst;
@@ -49,7 +49,7 @@ public class SRTF {
         }
 
         // Draw graphical representation
-        drawGraph(executionTimeline , processarray);
+//        drawGraph(executionTimeline , processarray);
     }
 
     // Draw graphical representation
@@ -145,6 +145,8 @@ public class SRTF {
         // Print average waiting time and turnaround time
         System.out.printf("\nAverage Waiting Time: %.2f\n", totalWaitingTime / proarray.length);
         System.out.printf("Average Turnaround Time: %.2f\n", totalTAT / proarray.length);
+        GUI gui = new GUI(executionTimeline , proarray , "SRTF" , totalWaitingTime / proarray.length ,totalTAT / proarray.length );
+
     }
 
     private static Color getColorFromString(String colorString) {

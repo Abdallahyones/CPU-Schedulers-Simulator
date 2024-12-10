@@ -31,11 +31,11 @@ import java.util.List;
 class SchedulerSimulation {
     Queue<Process> processes = new PriorityQueue<Process>(Comparator.comparingInt(c -> c.arrivalTime));
     double V1, V2;
-    List<String> timeline = new ArrayList<>(); // To track timeline for graphical representation
+    List<Integer> timeline = new ArrayList<>(); // To track timeline for graphical representation
     List<String> colors = new ArrayList<>(); // List to track colors for graphical representation
 
 
-    public SchedulerSimulation(Queue<Process> processes) {
+    public SchedulerSimulation(Queue<Process> processes ) {
         this.processes = processes;
         int mxArr = 0, mxBurst = 0;
         for (Process p : processes) {
@@ -49,7 +49,7 @@ class SchedulerSimulation {
         }
     }
 
-    public void run() {
+    public void run( Process[] proarray) {
         Queue<Process> ReadyQueue = new LinkedList<>();
         int currentTime = 0;
         Process process = null;
@@ -58,7 +58,7 @@ class SchedulerSimulation {
             // Get Process at certain time
             ReadyQueue.addAll(GetProcesses(processes, currentTime));
             if (ReadyQueue.isEmpty()) {
-                timeline.add("IDLE");
+                timeline.add(-1);
                 colors.add("LIGHT_GRAY"); // Add "IDLE" color to timeline
                 currentTime++;
                 continue;
@@ -74,7 +74,7 @@ class SchedulerSimulation {
             String Msg = "";
 
             while (curr < process.quantum && !preempted && !done) {
-                timeline.add(process.name); // Add process name to the timeline
+                timeline.add(process.id); // Add process name to the timeline
                 colors.add(process.color); // Add the color of the process to the colors list
                 System.out.println("Curr : " + (curr + currentTime) + " Name " + process.name +
                         " Remaining Burst Time : " + process.remainingTime);
@@ -130,7 +130,9 @@ class SchedulerSimulation {
             }
         }
         System.out.println(currentTime);
-        drawGraph(timeline , colors); // Draw the graphical representation
+        GUI gui = new GUI(timeline ,proarray  , "FCAI" , 0 , 0 );
+//        drawGraph(timeline , colors); // Draw the graphical representation
+
     }
 
     public static List<Process> GetProcesses(Queue<Process> processes, int currentTime) {
@@ -175,7 +177,7 @@ class SchedulerSimulation {
 
         // Create a list of processes
         Queue<Process> processes = new PriorityQueue<Process>(Comparator.comparingInt(c -> c.arrivalTime));
-
+        Process[] proarray = new Process[numProcesses];
         for (int i = 0; i < numProcesses; i++) {
             System.out.println("\nEnter details for Process " + (i + 1) + ":");
 
@@ -197,19 +199,19 @@ class SchedulerSimulation {
 
             System.out.print("Priority (1-10, lower number = higher priority): ");
             int priority = Integer.parseInt(scanner.nextLine().trim()); // Clear buffer after this line
-
-            processes.add(new Process(name, 0  , arrivalTime, burstTime, priority , roundRobinQuantum , color));
+            proarray[i] = new Process(name, i+1  , arrivalTime, burstTime, priority , roundRobinQuantum , color);
+            processes.add(new Process(name, i+1  , arrivalTime, burstTime, priority , roundRobinQuantum , color));
         }
 
         // Execute FCAI Scheduling
         System.out.println("\nExecuting FCAI Scheduling...");
         SchedulerSimulation inst =new SchedulerSimulation(processes);
-        inst.run();
+        inst.run(proarray);
 
         scanner.close();
     }
 
-    public void drawGraph(List<String> timeline, List<String> colors) {
+    public void drawGraph(List<Integer> timeline, List<String> colors) {
         JFrame frame = new JFrame("FCAI Scheduling Timeline");
         frame.setSize(1200, 200);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -224,10 +226,10 @@ class SchedulerSimulation {
                 int height = 50;
 
                 for (int i = 0; i < timeline.size(); i++) {
-                    String processName = timeline.get(i);
+                    String processName = "P"+ timeline.get(i);
                     String processColor = colors.get(i);
 
-                    if (processName.equals("IDLE")) {
+                    if (timeline.get(i).equals(-1)) {
                         g.setColor(Color.LIGHT_GRAY);
                         g.fillRect(x, y, width, height);
                         g.setColor(Color.BLACK);
