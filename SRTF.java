@@ -32,7 +32,11 @@ public class SRTF {
 
             if (prevProcessID != -1 && prevProcessID != shortestID) {
                 curtime += switchingTime;
-                executionTimeline.add(-1); // Represent context switch with -1
+                int timeswitching = switchingTime ;
+                while (timeswitching > 0){
+                    executionTimeline.add(-1);
+                    timeswitching -= 1 ;
+                } // Represent context switch with -1
             }
 
             bt[shortestID]--;
